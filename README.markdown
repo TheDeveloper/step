@@ -72,16 +72,18 @@ Also you can use group with a dynamic number of common tasks.
 
 If the library you're using for asynchronous calls doesn't follow node's convention of function callback(err, res), then you could consider using an adapter like the following:
 
+   function adapter(){
+      var x = this.parallel();
+      return function(rr){
+        err = rr.status != 'success' ? rr : null; // Or whatever logic is necessary to ascertain status
+        x(err, rr);
+      }
+    }
+
     Step(
       // Two actions in parallel
       function loadStuff() {
-        naughtyLibrary.doSomething(foo, (function(){
-            var x = this.parallel();
-            return function(rr){
-              err = rr.status != 'success' ? rr : null;
-              x(err, rr);
-            }
-          }.bind(this))());
+        naughtyLibrary.doSomething(foo, adapter.call(this));
         fs.readFile("/etc/passwd", this.parallel());
       },
       // Show the result when done
@@ -91,3 +93,4 @@ If the library you're using for asynchronous calls doesn't follow node's convent
         console.log(users);
       }
     )
+ 
