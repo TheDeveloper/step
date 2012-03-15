@@ -69,3 +69,25 @@ Also you can use group with a dynamic number of common tasks.
     );
 
 *Note* that we both call `this.group()` and `group()`.  The first reserves a slot in the parameters of the next step, then calling `group()` generates the individual callbacks and increments the internal counter.
+
+If the library you're using for asynchronous calls doesn't follow node's convention of function callback(err, res), then you could consider using an adapter like the following:
+
+    Step(
+      // Two actions in parallel
+      function loadStuff() {
+        naughtyLibrary.doSomething(foo, (function(){
+            var x = this.parallel();
+            return function(rr){
+              err = rr.status != 'success' ? rr : null;
+              x(err, rr);
+            }
+          }.bind(this))());
+        fs.readFile("/etc/passwd", this.parallel());
+      },
+      // Show the result when done
+      function showStuff(err, libRes, users) {
+        if (err) throw err;
+        console.log(libRes);
+        console.log(users);
+      }
+    )
